@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: SCIM 2 Spring Boot Starter
