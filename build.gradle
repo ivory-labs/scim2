@@ -5,6 +5,8 @@ plugins {
 	id 'maven-publish'
 	id 'org.springframework.boot' version '2.7.18' apply false
 	id 'io.spring.dependency-management' version '1.1.6'
+	id 'signing'
+	id 'org.jreleaser' version '1.15.0'
 }
 
 group = 'io.ivory-labs'
@@ -14,6 +16,8 @@ java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(11)
 	}
+	withSourcesJar()
+	withJavadocJar()
 }
 
 configurations {
@@ -26,13 +30,6 @@ repositories {
 	mavenCentral()
 }
 
-publishing {
-	publications {
-		maven(MavenPublication) {
-			artifact jar
-		}
-	}
-}
 
 dependencyManagement {
 	imports {
@@ -54,3 +51,67 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+
+			pom {
+				name = 'scim2'
+				description = 'SCIM2 Implementation by Ivory Labs'
+				url = 'https://github.com/ivory-labs/scim2'
+				licenses {
+					license {
+						name = 'MIT License'
+						url = 'http://www.opensource.org/licenses/mit-license.php'
+					}
+				}
+				developers {
+					developer {
+						id = 'mmafrar'
+						name = 'Afrar Malakooth'
+						email = 'mmafrar@gmail.com'
+					}
+					developer {
+						id = 'azuzi'
+						name = 'Ahamed Azeem'
+						email = 'azim_zain@live.com'
+					}
+				}
+				scm {
+					connection = 'scm:git:git@github.com:ivory-labs/scim2.git'
+					developerConnection = 'scm:git:ssh://github.com:ivory-labs/scim2.git'
+					url = 'https://github.com/ivory-labs/scim2.git'
+				}
+			}
+		}
+	}
+
+	repositories {
+		maven {
+			url = layout.buildDirectory.dir('staging-deploy')
+		}
+	}
+}
+jreleaser {
+	signing {
+		active = 'ALWAYS'
+		armored = false
+	}
+	deploy {
+		maven {
+			nexus2 {
+				'maven-central' {
+					active = 'ALWAYS'
+					url = 'https://s01.oss.sonatype.org/service/local'
+					snapshotUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+					closeRepository = true
+					releaseRepository = true
+					stagingRepository('build/staging-deploy')
+				}
+			}
+		}
+	}
+}
+
