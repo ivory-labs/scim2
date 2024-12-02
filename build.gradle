@@ -59,7 +59,7 @@ publishing {
 
 			pom {
 				name = 'scim2'
-				description = 'SCIM2 Implementation by Ivory Labs'
+				description = 'SCIM 2.0 SDK for Spring by Ivory Labs'
 				url = 'https://github.com/ivory-labs/scim2'
 				licenses {
 					license {
@@ -94,6 +94,7 @@ publishing {
 		}
 	}
 }
+
 jreleaser {
 	signing {
 		active = 'ALWAYS'
@@ -114,4 +115,3 @@ jreleaser {
 		}
 	}
 }
-

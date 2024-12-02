@@ -145,7 +145,7 @@ Unit tests are located under the `src/test` directory, and can be run with the G
 
 License
 -------
-This is a fork from the [Staffbase/scim2](https://github.com/staffbase/scim2) project.
+This repository contains code branched from the [Staffbase/scim2](https://github.com/staffbase/scim2) project.
 
 Ivory Labs contributions are licensed under the MIT License (MIT).
 
