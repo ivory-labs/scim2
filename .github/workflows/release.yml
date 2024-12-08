@@ -20,8 +20,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 11
-          distribution: 'adoptopenjdk'
+          java-version: 21
+          distribution: 'temurin'
           server-id: central
           server-username: ${{ secrets.SONATYPE_USERNAME }}
           server-password: ${{ secrets.SONATYPE_PASSWORD }}
