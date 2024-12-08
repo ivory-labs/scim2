@@ -1,4 +1,4 @@
-name: release
+name: Release to Maven Central
 
 on:
   push:
@@ -10,50 +10,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all tags for JReleaser
 
-      # Configure build steps as you'd normally do
-
-      - name: Setup Java
+      # Step 2: Set up Java environment
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
-          server-id: central
-          server-username: ${{ secrets.SONATYPE_USERNAME }}
-          server-password: ${{ secrets.SONATYPE_PASSWORD }}
-          gpg-private-key: ${{ secrets.SIGNING_PRIVATE_KEY }}
-          cache: maven
+          cache: gradle
 
-      # Post JARs to Maven Central
-
-      - name: Release to Maven Central
-        env:
-          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.SONATYPE_PASSWORD }}
+      # Step 3: Import GPG key for signing
+      - name: Import GPG key
         run: |
-          export GPG_TTY=$(tty)
-          git config user.name "${{ github.event.head_commit.committer.name }}"
-          git config user.email "${{ github.event.head_commit.committer.email }}"
-          mvn -B --file pom.xml release:prepare release:perform
+          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | gpg --batch --import
+          echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
 
-      # Create a release
+      # Step 4: Verify Gradle Wrapper
+      - name: Verify Gradle Wrapper
+        run: ./gradlew wrapper --gradle-version=8.3 --distribution-type=bin
 
-      - name: Run JReleaser
+      # Step 5: Build and test
+      - name: Build and Test
+        run: ./gradlew build test --stacktrace
+
+      # Step 6: Release with JReleaser
+      - name: Release to Maven Central with JReleaser
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        with:
+          args: full-release
 
-      # Persist logs
-
-      - name: JReleaser release output
+      # Step 7: Upload logs for debugging
+      - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jreleaser-release
+          name: release-logs
           path: |
             out/jreleaser/trace.log
             out/jreleaser/output.properties
