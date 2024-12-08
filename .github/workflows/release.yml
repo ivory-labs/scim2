@@ -27,19 +27,18 @@ jobs:
       # Step 3: Import GPG key for signing
       - name: Import GPG key
         run: |
-          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | gpg --batch --import
-          echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
+          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
 
-      # Step 4: Verify Gradle Wrapper
-      - name: Verify Gradle Wrapper
+      # Step 4: Ensure Gradle Wrapper version
+      - name: Update Gradle Wrapper to 8.3
         run: ./gradlew wrapper --gradle-version=8.3 --distribution-type=bin
 
-      # Step 5: Build and test
+      # Step 5: Build and test the project
       - name: Build and Test
-        run: ./gradlew build test --stacktrace
+        run: ./gradlew clean build test --parallel --stacktrace
 
-      # Step 6: Release with JReleaser
-      - name: Release to Maven Central with JReleaser
+      # Step 6: Release to Maven Central with JReleaser
+      - name: Release Artifacts to Maven Central
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
