@@ -2,8 +2,8 @@ name: Release to Maven Central
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger on version tags
+    branches:
+      - 'fix/cicd'
 
 jobs:
   deploy:
