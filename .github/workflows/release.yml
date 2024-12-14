@@ -1,58 +1,65 @@
-name: Release to Maven Central
+name: release
 
 on:
-  push:
-    branches:
-      - 'fix/cicd'
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  release:
+    name: Release
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository
+      # Checkout the repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all tags for JReleaser
+          fetch-depth: 0
 
-      # Step 2: Set up Java environment
-      - name: Set up Java
+      # Setup Java 21 using Temurin distribution
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
-          cache: gradle
+          server-id: central
+          server-username: ${{ secrets.SONATYPE_USERNAME }}
+          server-password: ${{ secrets.SONATYPE_PASSWORD }}
+          gpg-private-key: ${{ secrets.SIGNING_PRIVATE_KEY }}
+          cache: maven
 
-      # Step 3: Import GPG key for signing
-      - name: Import GPG key
+      # Decode and Import GPG Key
+      - name: Import GPG Key
         run: |
-          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+        env:
+          GPG_TTY: $(tty)
 
-      # Step 4: Ensure Gradle Wrapper version
-      - name: Update Gradle Wrapper to 8.3
-        run: ./gradlew wrapper --gradle-version=8.3 --distribution-type=bin
+      # Configure Git User
+      - name: Configure Git
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      # Step 5: Build and test the project
-      - name: Build and Test
-        run: ./gradlew clean build test --parallel --stacktrace
+      # Maven Release: Prepare and Perform
+      - name: Release to Maven Central
+        env:
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          mvn -B release:prepare release:perform
 
-      # Step 6: Release to Maven Central with JReleaser
-      - name: Release Artifacts to Maven Central
+      # Run JReleaser to publish GitHub Release
+      - name: Run JReleaser
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OSSRH_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-        with:
-          args: full-release
 
-      # Step 7: Upload logs for debugging
-      - name: Upload logs
+      # Persist JReleaser Logs
+      - name: JReleaser Release Output
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: release-logs
+          name: jreleaser-release
           path: |
             out/jreleaser/trace.log
             out/jreleaser/output.properties
