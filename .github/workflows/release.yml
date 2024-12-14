@@ -1,7 +1,9 @@
 name: release
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - 'fix/cicd'
 
 jobs:
   release:
