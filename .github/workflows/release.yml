@@ -5,53 +5,74 @@ on:
     branches:
       - 'fix/cicd'
 
+#jobs:
+#  release:
+#    name: Release
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      # Step 1: Checkout the repository
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      # Step 2: Setup Java 21 using Temurin distribution
+#      - name: Setup Java
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: 21
+#          distribution: 'temurin'
+#          server-id: central
+#          server-username: ${{ secrets.SONATYPE_USERNAME }}
+#          server-password: ${{ secrets.SONATYPE_PASSWORD }}
+#          gpg-private-key: ${{ secrets.SIGNING_PRIVATE_KEY }}
+#          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+#          cache: gradle
+#
+#      # Step 3: Configure Git User
+#      - name: Configure Git
+#        run: |
+#          git config user.name "${{ github.actor }}"
+#          git config user.email "${{ github.actor }}@users.noreply.github.com"
+#
+#      # Step 4: Maven Release: Prepare and Perform
+#      - name: Release to Maven Central
+#        run: ./gradlew release
+#
+#      # Step 5: Run JReleaser to publish GitHub Release
+#      - name: Run JReleaser
+#        uses: jreleaser/release-action@v2
+#        env:
+#          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      # Step 6: Persist JReleaser Logs
+#      - name: JReleaser Release Output
+#        if: always()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: jreleaser-release
+#          path: |
+#            out/jreleaser/trace.log
+#            out/jreleaser/output.properties
+
+
 jobs:
-  release:
-    name: Release
+  publish:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Step 2: Setup Java 21 using Temurin distribution
-      - name: Setup Java
+      - uses: actions/checkout@v4
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: '11'
           distribution: 'temurin'
-          server-id: central
-          server-username: ${{ secrets.SONATYPE_USERNAME }}
-          server-password: ${{ secrets.SONATYPE_PASSWORD }}
-          gpg-private-key: ${{ secrets.SIGNING_PRIVATE_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          cache: gradle
 
-      # Step 3: Configure Git User
-      - name: Configure Git
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-      # Step 4: Maven Release: Prepare and Perform
-      - name: Release to Maven Central
-        run: ./gradlew release
-
-      # Step 5: Run JReleaser to publish GitHub Release
-      - name: Run JReleaser
-        uses: jreleaser/release-action@v2
+      - name: Publish package
+        run: ./gradlew publish
         env:
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 6: Persist JReleaser Logs
-      - name: JReleaser Release Output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jreleaser-release
-          path: |
-            out/jreleaser/trace.log
-            out/jreleaser/output.properties
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}

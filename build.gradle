@@ -32,39 +32,15 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
-
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
 
-			pom {
-				name = 'scim2'
-				description = 'SCIM 2.0 SDK for Spring by Ivory Labs'
-				url = 'https://github.com/ivory-labs/scim2'
-				licenses {
-					license {
-						name = 'MIT License'
-						url = 'http://www.opensource.org/licenses/mit-license.php'
-					}
-				}
-				developers {
-					developer {
-						id = 'mmafrar'
-						name = 'Afrar Malakooth'
-						email = 'mmafrar@gmail.com'
-					}
-					developer {
-						id = 'azuzi'
-						name = 'Ahamed Azeem'
-						email = 'azim_zain@live.com'
-					}
-				}
-				scm {
-					connection = 'scm:git:git@github.com:ivory-labs/scim2.git'
-					developerConnection = 'scm:git:ssh://github.com:ivory-labs/scim2.git'
-					url = 'https://github.com/ivory-labs/scim2.git'
-				}
+	repositories {
+		maven {
+			name = "OSSRH"
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+			credentials {
+				username = System.getenv("MAVEN_USERNAME")
+				password = System.getenv("MAVEN_PASSWORD")
 			}
 		}
 	}
