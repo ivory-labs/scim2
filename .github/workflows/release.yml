@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   push:
@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Step 1: Checkout the repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Setup Java 21 using Temurin distribution
+      # Step 2: Setup Java 21 using Temurin distribution
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -27,36 +27,26 @@ jobs:
           server-username: ${{ secrets.SONATYPE_USERNAME }}
           server-password: ${{ secrets.SONATYPE_PASSWORD }}
           gpg-private-key: ${{ secrets.SIGNING_PRIVATE_KEY }}
-          cache: maven
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          cache: gradle
 
-      # Decode and Import GPG Key
-      - name: Import GPG Key
-        run: |
-          echo "${{ secrets.SIGNING_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
-        env:
-          GPG_TTY: $(tty)
-
-      # Configure Git User
+      # Step 3: Configure Git User
       - name: Configure Git
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      # Maven Release: Prepare and Perform
+      # Step 4: Maven Release: Prepare and Perform
       - name: Release to Maven Central
-        env:
-          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.SONATYPE_PASSWORD }}
-        run: |
-          mvn -B release:prepare release:perform
+        run: ./gradlew release
 
-      # Run JReleaser to publish GitHub Release
+      # Step 5: Run JReleaser to publish GitHub Release
       - name: Run JReleaser
         uses: jreleaser/release-action@v2
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Persist JReleaser Logs
+      # Step 6: Persist JReleaser Logs
       - name: JReleaser Release Output
         if: always()
         uses: actions/upload-artifact@v4
