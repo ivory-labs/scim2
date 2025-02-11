@@ -1,0 +1,113 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
+plugins {
+	id 'java'
+	id 'java-library'
+	id 'maven-publish'
+	id 'org.jreleaser' version '1.16.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.springframework.boot' version '2.7.18' apply false
+}
+
+group = 'io.ivory-labs'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(11)
+	}
+	withSourcesJar()
+	withJavadocJar()
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId = 'io.ivory-labs'
+			artifactId = 'scim2-spring-boot-starter'
+
+			pom {
+				name = 'SCIM2 Spring Boot Starter'
+				description = 'SCIM 2.0 SDK for Spring'
+				url = 'https://github.com/ivory-labs/scim2'
+
+				licenses {
+					license {
+						name = 'MIT License'
+						url = 'https://github.com/ivory-labs/scim2/blob/main/LICENSE'
+					}
+				}
+
+				developers {
+					developer {
+						id = 'mmafrar'
+						name = 'Afrar Malakooth'
+					}
+					developer {
+						id = 'azuzi'
+						name = 'Ahamed Azeem'
+					}
+				}
+
+				scm {
+					url = 'https://github.com/ivory-labs/scim2'
+					connection = 'scm:git:https://github.com/ivory-labs/scim2.git'
+					developerConnection = 'scm:git:ssh://git@github.com:ivory-labs/scim2.git'
+				}
+			}
+		}
+	}
+
+	repositories {
+		maven {
+			url = layout.buildDirectory.dir('staging-deploy')
+		}
+	}
+}
+
+jreleaser {
+	signing {
+		active = 'ALWAYS'
+		armored = true
+	}
+	deploy {
+		maven {
+			mavenCentral {
+				sonatype {
+					active = 'ALWAYS'
+					url = 'https://central.sonatype.com/api/v1/publisher'
+					stagingRepository('build/staging-deploy')
+				}
+			}
+		}
+	}
+}
+
+dependencyManagement {
+	imports {
+		mavenBom SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
